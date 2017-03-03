@@ -170,7 +170,7 @@ begin
     ms := TMemoryStream.Create;
     try
       FOperations.SaveBlockToStream(false,ms);
-      Result := Bank.AddNewBlockChainBlock(NewBlockOperations,newBlockAccount,errors, TNetData.NetData.NetworkAdjustedTime.AdjustedTime);
+      Result := Bank.AddNewBlockChainBlock(NewBlockOperations,newBlockAccount,errors, TNetData.NetData.NetworkAdjustedTime.TimeOffset);
       if Result then begin
         if Assigned(SenderConnection) then begin
           FNodeLog.NotifyNewLog(ltupdate,SenderConnection.ClassName,Format(';%d;%s;%s',[NewBlockOperations.OperationBlock.block,SenderConnection.ClientRemoteAddr,NewBlockOperations.OperationBlock.block_payload]));
@@ -658,6 +658,9 @@ begin
         end;
         If op.Previous_Sender_updated_block>block then exit;
         block := op.Previous_Sender_updated_block;
+      end else if (op.OpType = CT_Op_Transaction) and (TOpTransaction(op).Data.target = account) then begin
+        If op.Previous_Destination_updated_block > block then exit;
+        block := op.Previous_Destination_updated_block;
       end;
     end;
     if (block>=aux_block) then exit; // Error... not found a valid block positioning
